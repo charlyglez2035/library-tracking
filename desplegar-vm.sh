@@ -24,6 +24,7 @@ if [ -z "$LIB" ]; then
   encontrados="$(con_sudo find /home /opt /srv /var/www -maxdepth 7 -path '*/apps/services/pedidos/app.py' \
     -not -path '*/node_modules/*' 2>/dev/null \
     || find "$HOME" -maxdepth 7 -path '*/apps/services/pedidos/app.py' 2>/dev/null)"
+  encontrados="$(echo "$encontrados" | sort -u)"
   [ -n "$encontrados" ] || fallar "No encontre Library. Indica la carpeta: LIBRARY_DIR=/ruta bash desplegar-vm.sh"
   if [ "$(echo "$encontrados" | wc -l)" -gt 1 ]; then
     echo "$encontrados" | sed 's#/apps/services/pedidos/app.py##' >&2
@@ -39,7 +40,7 @@ DUENO="$(stat -c %U "$LIB")"
 
 paso "2/6 Encendiendo PostgreSQL, Redis y los microservicios"
 con_sudo systemctl start postgresql 2>/dev/null
-con_sudo systemctl start redis-server 2>/dev/null
+for redis in redis-server redis valkey; do con_sudo systemctl start "$redis" 2>/dev/null; done
 if servicios_sanos; then
   echo "Los seis microservicios ya responden."
 else
